@@ -1,4 +1,3 @@
-const API_KEY = "48d29512b5c75ad3d9857ea62c1430a6"; 
 const API_URL = "https://api.openweathermap.org/data/2.5/weather"; 
 const TIMEZONE_API_URL = "https://worldtimeapi.org/api/timezone"; 
 
@@ -11,8 +10,9 @@ async function getWeather(event) {
     return; 
   } 
 
+  // Calling backend API instead of the OpenWeather API directly
   try { 
-    const weatherResponse = await fetch(`${API_URL}?q=${city}&appid=${API_KEY}&units=metric`); 
+    const weatherResponse = await fetch('/weather?city=${city}');
     const weatherData = await weatherResponse.json(); 
 
     if (weatherData.cod !== 200) { 
