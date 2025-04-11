@@ -1,55 +1,59 @@
-const API_URL = "https://api.openweathermap.org/data/2.5/weather"; 
-const TIMEZONE_API_URL = "https://worldtimeapi.org/api/timezone"; 
+import axios from 'https://cdn.skypack.dev/axios';
 
-async function getWeather(event) { 
-  event.preventDefault(); 
+const API_KEY = "cc40f11aee9613ff49d8502ae694e2f0";
+const weatherForm = document.getElementById("weatherForm");
+const weatherInfo = document.getElementById("weatherInfo");
+const timeZone = document.getElementById("timeZone");
 
-  const city = document.getElementById("cityInput").value.trim(); 
-  if (!city) { 
-    alert("Please enter a city name."); 
-    return; 
-  } 
+weatherForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
 
-  // Calling backend API instead of the OpenWeather API directly
-  try { 
-    const weatherResponse = await fetch('/weather?city=${city}');
-    const weatherData = await weatherResponse.json(); 
+  const city = document.getElementById("cityInput").value.trim();
+  if (!city) {
+    alert("Please enter a city name.");
+    return;
+  }
 
-    if (weatherData.cod !== 200) { 
-      alert("City not found. Please enter a valid city."); 
-      return; 
-    } 
+  try {
+    const response = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`);
+    const data = response.data;
 
-    const temperature = weatherData.main.temp; 
-    const description = weatherData.weather[0].description; 
-    const countryCode = weatherData.sys.country; 
+    const temperature = data.main.temp;
+    const description = data.weather[0].description;
+    const countryCode = data.sys.country;
 
-    document.getElementById("weatherInfo").innerHTML = ` 
-      <h2>Weather in ${city}, ${countryCode}</h2> 
-      <p>Temperature: ${temperature}°C</p> 
-      <p>Description: ${description}</p> 
-    `; 
+    weatherInfo.innerHTML = `
+      <h2>Weather in ${city}, ${countryCode}</h2>
+      <p>🌡️ Temperature: ${temperature}°C</p>
+      <p>🌤️ Description: ${description}</p>
+    `;
 
-    getTimeZone(weatherData.coord.lat, weatherData.coord.lon); 
-  } catch (error) { 
-    console.log("Error fetching weather data:", error); 
-  } 
-} 
 
-async function getTimeZone(lat, lon) { 
-  try { 
-    const response = await fetch(`${TIMEZONE_API_URL}/Etc/GMT`); 
-    const timeData = await response.json(); 
+    getTimeZone(data.coord.lat, data.coord.lon);
+  } catch (error) {
+    console.log("Error fetching weather data:", error);
+    alert("City not found or error fetching data.");
+    weatherInfo.innerHTML = "";
+    timeZone.innerHTML = "";
+  }
+});
 
-    const currentTime = new Date(timeData.datetime).toLocaleTimeString(); 
+async function getTimeZone(lat, lon) {
+  try {
+    const timeResponse = await axios.get(`https://api.api-ninjas.com/v1/worldtime?lat=${lat}&lon=${lon}`, {
+      headers: {
+        'X-Api-Key': 'YOUR_TIMEZONE_API_KEY' // You'll need a time API like Ninja API (free)
+      }
+    });
 
-    document.getElementById("timeZone").innerHTML = ` 
-      <h3>Current Time</h3> 
-      <p>${currentTime}</p> 
-    `; 
-  } catch (error) { 
-    console.error("Error fetching time zone:", error); 
-  } 
-} 
+    const timeData = timeResponse.data;
 
-document.getElementById("weatherForm").addEventListener("submit", getWeather);
+    timeZone.innerHTML = `
+      <h3>🕒 Current Local Time</h3>
+      <p>${timeData.datetime}</p>
+    `;
+  } catch (error) {
+    console.error("Error fetching time zone:", error);
+    timeZone.innerHTML = "<p>Couldn't load time zone.</p>";
+  }
+}
